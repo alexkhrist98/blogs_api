@@ -4,9 +4,9 @@ import dotenv
 import dotenv
 import os
 
-dotenv.load()
-HOST =
-PORT =
+dotenv.load("server.env")
+HOST:str = os.getenv("HOST")
+PORT:int = int(os.getenv("PORT"))
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -23,3 +23,6 @@ file_handler.setLevel(logging.ERROR)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
+if __name__ == "__main__":
+    uvicorn.run("app.app:app", host=HOST, port=PORT,
+                reload=True)
