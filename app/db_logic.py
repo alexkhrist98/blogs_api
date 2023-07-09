@@ -15,13 +15,16 @@ async def create_connection():
         logger.error("Cannot connect to the database")
 
 
-async def fetch_user(user: models.User):
+async def fetch_user(email: str):
     try:
         with await create_connection() as conn:
             cursor = conn.cursor()
             conn.row_factory = sqlite3.Row
-            cursor.execute("SELECT * FROM users WHERE email=?", (user.email, ))
-            user = cursor.fetchall()
+            cursor.row_factory = sqlite3.Row
+            cursor.execute("SELECT * FROM users WHERE email=?", (email, ))
+            user = cursor.fetchone()
+            user = models.User.parse_obj(dict(user))
+
             return user
     except:
         logger.exception("An exception has occured")
