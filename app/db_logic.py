@@ -45,6 +45,20 @@ async def add_user(user: models.User):
     except:
         logger.exception("An exception has occured")
 
+async def add_post(post: models.BlogPost):
+    with await create_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("BEGIN")
+        cursor.execute("INSERT INTO posts(author_id, title, main_text, tags, likes, dislikes) VALUES (?, ?, ?, ?,?, ?)", (post.author_id,
+                                                                                                                    post.title,
+                                                                                                                    post.main_text,
+                                                                                                                    post.tags,
+                                                                                                                    post.likes,
+                                                                                                                    post.dislikes, ))
+        cursor.execute("COMMIT")
+        conn.commit()
+
+
 async def set_up_db():
     with await create_connection() as conn:
         cursor = conn.cursor()
@@ -53,8 +67,18 @@ async def set_up_db():
                 "last_name TEXT," \
                 "email TEXT," \
                 "password TEXT)"
+        query2 = "CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, " \
+                 "author_id INTEGER," \
+                 "title TEXT," \
+                 "main_text TEXT," \
+                 "tags TEXT," \
+                 "likes INTEGER," \
+                 "dislikes INTEGER," \
+                 "FOREIGN KEY (author_id) REFERENCES users(id))"
+        cursor.execute("PRAGMA foreign_keys = ON")
         cursor.execute("BEGIN")
         cursor.execute(query)
+        cursor.execute(query2)
         cursor.execute("COMMIT")
         conn.commit()
         logger.info("Database is set up successfully")

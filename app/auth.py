@@ -1,6 +1,8 @@
 import secrets
 import hashlib
 import asyncio
+
+import jwt.exceptions
 from jwt import PyJWT
 from main import logger
 from app import models
@@ -40,6 +42,17 @@ async def generate_jwt(user: models.User):
         return token
     except:
         logger.exception("An exception has occured")
+
+async def validate_token(token: str):
+    try:
+        payload = PyJWT().decode(token, key=SECRET_KEY, algorithms=['HS256'])
+        payload = models.TokenPayload.parse_obj(payload)
+        return payload
+    except:
+        logger.exception("An exception has occured")
+        raise jwt.exceptions.InvalidTokenError
+
+
 
 
 
