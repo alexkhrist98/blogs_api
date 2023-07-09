@@ -58,6 +58,29 @@ async def add_post(post: models.BlogPost):
         cursor.execute("COMMIT")
         conn.commit()
 
+async def fetch_all_posts():
+    try:
+        with await create_connection() as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.row_factory = sqlite3.Row
+            cursor.execute("SELECT id, title, tags FROM posts")
+            posts = cursor.fetchall()
+            return posts
+    except:
+        logger.exception("An exception has occured")
+
+async def fetch_one_post(id: int):
+    with await create_connection() as conn:
+        try:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.row_factory = sqlite3.Row
+            cursor.execute("SELECT * FROM posts WHERE id = ?", (id,))
+            post = cursor.fetchone()
+            return post
+        except:
+            logger.exception("An exception has occured")
 
 async def set_up_db():
     with await create_connection() as conn:
