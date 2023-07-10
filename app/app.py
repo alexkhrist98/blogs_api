@@ -121,3 +121,28 @@ async def update_reaction(post_id: int, token: str = fastapi.Header(), reaction:
     except Exception:
         logger.exception("An exception has occured")
         raise fastapi.HTTPException(status_code=500, detail="An unexpected error has occured")
+
+@app.put("/blogs", tags=["BLOGPOSTS"], description="This endpoint provides editing optionw for posts.")
+async def edit_post(edited_post:models.BlogPost, token: str = fastapi.Header()):
+    try:
+        post = await db_logic.fetch_one_post(edited_post.id)
+        post = models.BlogPost.parse_obj(post)
+
+        if not post:
+            raise ValueError
+        payload = await auth.validate_token(token)
+        user = await db_logic.fetch_user(email=payload.email)
+        if not user or user.id != post.author_id:
+            raise PermissionError
+
+        await db_logic.edit_post(edited_post)
+        return {"Message": "Post was edited succesfully"}
+    except PermissionError:
+        raise fastapi.HTTPException(status_code=403, detail="Permission denied")
+    except ValueError:
+        logger.exception("An exception has occured")
+        raise fastapi.HTTPException(status_code=404, detail="Not fount")
+    except Exception:
+        logger.exception("An exception has occured")
+        raise fastapi.HTTPException(status_code=500, detail="An unexpected error has occured")
+

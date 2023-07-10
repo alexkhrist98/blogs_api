@@ -17,8 +17,8 @@ class TokenPayload(pydantic.BaseModel):
 class BlogPost(pydantic.BaseModel):
     id: int = pydantic.Field(default=0, exclude=True, hide=True)
     author_id: int = pydantic.Field(default=0, hide=True, exclude=True)
-    title: str
-    main_text: str
+    title: str = ""
+    main_text: str = ""
     tags: str = ""
     likes: int = pydantic.Field(default=0, exclude=True)
     dislikes: int = pydantic.Field(default=0, exclude=True)

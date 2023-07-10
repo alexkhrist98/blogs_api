@@ -96,8 +96,47 @@ async def update_reaction(post: models.BlogPost):
             cursor.execute("UPDATE posts SET likes = ?, dislikes = ? WHERE id = ?", (post.likes, post.dislikes, post.id, ))
             cursor.execute("COMMIT")
             conn.commit()
+            logger.info("Reactions updated")
     except:
         logger.exception("An exception has occured")
+
+async def edit_post(edited_post: models.BlogPost):
+    try:
+        with await create_connection() as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.row_factory = sqlite3.Row
+            cursor.execute("BEGIN")
+
+            if edited_post.title and edited_post.main_text and edited_post.tags:
+                cursor.execute("UPDATE posts SET title=?, main_text=?, tags=? WHERE id=?", (edited_post.title,
+                                                                                               edited_post.main_text,
+                                                                                               edited_post.tags,
+                                                                                               edited_post.id, ))
+            elif edited_post.title and edited_post.main_text:
+                cursor.execute("UPDATE posts SET title=?, main_text=? WHERE id=?", (edited_post.title,
+                                                                                    edited_post.main_text,
+                                                                                    edited_post.id, ))
+            elif edited_post.title and edited_post.tags:
+                cursor.execute("UPDATE posts SET title=?, tags=?, WHERE id=?", (edited_post.title,
+                                                                                   edited_post.tags,
+                                                                                   edited_post.id, ))
+            elif edited_post.main_text and edited_post.tags:
+                cursor.execute("UPDATE posts SET main_text=?, tags=? WHERE id=?", (edited_post.main_text,
+                                                                                      edited_post.tags,
+                                                                                      edited_post.id, ))
+            elif edited_post.title:
+                cursor.execute("UPDATE posts SET title=? WHERE id=?", (edited_post.title, edited_post.id, ))
+            elif edited_post.main_text:
+                cursor.execute("UPDATE posts SET main_text WHERE id=?", (edited_post.main_text, edited_post.id, ))
+            elif edited_post.tags:
+                cursor.execute("UPDATE posts SET tags=? WHERE id=?", (edited_post.tags, edited_post.id, ))
+            cursor.execute("COMMIT")
+            conn.commit()
+            logger.info("post edited successfully")
+    except Exception:
+        logger.exception("An exception ha occured")
+
 
 async def set_up_db():
     with await create_connection() as conn:
