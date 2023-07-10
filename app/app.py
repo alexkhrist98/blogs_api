@@ -171,3 +171,6 @@ async def delete_post(post_id: int, token: str = fastapi.Header()):
         logger.exception("An exception has occured")
         raise fastapi.HTTPException(status_code=500, detail="An unexpected error has occured")
 
+@app.get("/cat", tags=["TEST"], description="This endpoint is an easter egg")
+async def pat_a_cat():
+    return {"Message": "If you stuck with this API, relax, pat a cat, and return here later. Meow)"}
