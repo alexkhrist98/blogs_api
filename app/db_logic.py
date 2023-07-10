@@ -15,13 +15,16 @@ async def create_connection():
         logger.error("Cannot connect to the database")
 
 
-async def fetch_user(email: str):
+async def fetch_user(email: str = None, user_id: int = None):
     try:
         with await create_connection() as conn:
             cursor = conn.cursor()
             conn.row_factory = sqlite3.Row
             cursor.row_factory = sqlite3.Row
-            cursor.execute("SELECT * FROM users WHERE email=?", (email, ))
+            if email:
+                cursor.execute("SELECT * FROM users WHERE email=?", (email,))
+            elif user_id:
+                cursor.execute("SELECT * FROM users WHERE id=?", (user_id,))
             user = cursor.fetchone()
             user = models.User.parse_obj(dict(user))
 
@@ -78,9 +81,23 @@ async def fetch_one_post(id: int):
             cursor.row_factory = sqlite3.Row
             cursor.execute("SELECT * FROM posts WHERE id = ?", (id,))
             post = cursor.fetchone()
+            post = dict(post)
             return post
         except:
             logger.exception("An exception has occured")
+
+async def update_reaction(post: models.BlogPost):
+    try:
+        with await create_connection() as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.row_factory = sqlite3.Row
+            cursor.execute("BEGIN")
+            cursor.execute("UPDATE posts SET likes = ?, dislikes = ? WHERE id = ?", (post.likes, post.dislikes, post.id, ))
+            cursor.execute("COMMIT")
+            conn.commit()
+    except:
+        logger.exception("An exception has occured")
 
 async def set_up_db():
     with await create_connection() as conn:

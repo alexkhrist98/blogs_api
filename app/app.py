@@ -88,3 +88,36 @@ async def read_post(post_id: int):
         logger.exception("An exception has occured")
         raise fastapi.HTTPException(status_code=500, detail="An unexpected error has occured")
 
+@app.patch("/blogs/{post_id}", tags=["BLOGPOSTS"], description="This endpoint uses patch to update count of likes and dislikes. "
+                                                                   "Send like or dislike in the header")
+async def update_reaction(post_id: int, token: str = fastapi.Header(), reaction: str = fastapi.Header()):
+    try:
+        payload = await auth.validate_token(token)
+        post = await db_logic.fetch_one_post(post_id)
+        if not post:
+            raise ValueError
+        post = models.BlogPost.parse_obj(post)
+        user = await db_logic.fetch_user(user_id=post.author_id)
+        if not user:
+            pass
+        elif user.email == payload.email:
+            raise PermissionError
+
+        if reaction.lower() == "like":
+            post.likes += 1
+        elif reaction.lower() == "dislike":
+            post.dislikes += 1
+        else:
+            raise ValueError
+        await db_logic.update_reaction(post)
+        return {"Message": "Reaction was updated successfully"}
+    except ValueError:
+        logger.exception("An exception has occured")
+        raise fastapi.HTTPException(status_code=400, detail="Invalid post id or reaction header")
+    except jwt.exceptions.InvalidTokenError:
+        raise fastapi.HTTPException(status_code=402, detail="Something in wrong with your token")
+    except PermissionError:
+        raise fastapi.HTTPException(status_code=403, detail="Permission denied. You can't like or dislike your own posts")
+    except Exception:
+        logger.exception("An exception has occured")
+        raise fastapi.HTTPException(status_code=500, detail="An unexpected error has occured")
