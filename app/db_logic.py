@@ -162,6 +162,19 @@ async def set_up_db():
         conn.commit()
         logger.info("Database is set up successfully")
 
+async def delete_post(post_id: int):
+    try:
+        with await create_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("BEGIN")
+            cursor.execute("DELETE FROM posts WHERE id=?", (post_id, ))
+            cursor.execute("COMMIT")
+            conn.commit()
+            logger.info("Message was deleted")
+    except Exception:
+        logger.exception("An exception has occured")
+
+
 if __name__ != "__main__":
     asyncio.create_task(set_up_db())
 

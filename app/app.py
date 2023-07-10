@@ -137,11 +137,36 @@ async def edit_post(edited_post:models.BlogPost, token: str = fastapi.Header()):
 
         await db_logic.edit_post(edited_post)
         return {"Message": "Post was edited succesfully"}
+    except jwt.exceptions.InvalidTokenError:
+        return fastapi.HTTPException(status_code=403, detail="Something wrong with your token")
     except PermissionError:
         raise fastapi.HTTPException(status_code=403, detail="Permission denied")
     except ValueError:
         logger.exception("An exception has occured")
         raise fastapi.HTTPException(status_code=404, detail="Not fount")
+    except Exception:
+        logger.exception("An exception has occured")
+        raise fastapi.HTTPException(status_code=500, detail="An unexpected error has occured")
+
+@app.delete("/blogs/{post_id}", tags=["BLOGPOSTS"], description="This endpoint deletes post from database. Specify post id")
+async def delete_post(post_id: int, token: str = fastapi.Header()):
+    try:
+        payload = await auth.validate_token(token)
+        user = await db_logic.fetch_user(email=payload.email)
+        post = await db_logic.fetch_one_post(post_id)
+        if not post:
+            raise ValueError
+        post = models.BlogPost.parse_obj(post)
+        if not user or user.id != post.author_id:
+            raise PermissionError
+        await db_logic.delete_post(post_id)
+        return {"Message": "Post was removed"}
+    except jwt.exceptions.InvalidTokenError:
+        raise fastapi.HTTPException(status_code=403, detail="Something wrong with your token")
+    except ValueError:
+        raise fastapi.HTTPException(status_code=404, detail="Post not found")
+    except PermissionError:
+        raise fastapi.HTTPException(status_code=403, detail="Access denied")
     except Exception:
         logger.exception("An exception has occured")
         raise fastapi.HTTPException(status_code=500, detail="An unexpected error has occured")
